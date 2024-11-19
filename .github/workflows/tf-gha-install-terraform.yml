@@ -122,7 +122,7 @@ jobs:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}    
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }} 
     - name: create-tfstate-storage-container
       uses: azure/CLI@v2
       with:
@@ -134,7 +134,7 @@ jobs:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}    
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }} 
   install-terraform:
     name: 'Install Terraform'
     runs-on: ubuntu-latest
@@ -149,25 +149,26 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
     - name: Terraform Init
-      run: echo ${{ env.ARM_SUBSCRIPTION_ID }}; 
-        echo "all env:${{ env.ARM_CLIENT_ID }}::${{ env.ARM_SUBSCRIPTION_ID }}";
-        terraform -chdir=${{ inputs.terraform_workingdir }} init 
-        -backend-config='storage_account_name=${{ inputs.terraform_st_storage_account }}'
-        -backend-config='container_name=${{ inputs.terraform_st_container_name }}'
-        -backend-config='key=${{ inputs.terraform_st_key }}'         
-        -backend-config='resource_group_name=${{ inputs.terraform_st_resource_group }}';      
+      run: |
+        terraform -chdir=${{ inputs.terraform_workingdir }} init \
+        -backend-config="storage_account_name=${{ inputs.terraform_st_storage_account }}" \
+        -backend-config="container_name=${{ inputs.terraform_st_container_name }}" \
+        -backend-config="key=${{ inputs.terraform_st_key }}" \
+        -backend-config="resource_group_name=${{ inputs.terraform_st_resource_group }}" \
+        -backend-config="access_key=${{ env.STORAGE_KEY }}"
       env:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}     
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        STORAGE_KEY: $(az storage account keys list --account-name ${{ inputs.terraform_st_storage_account }} --resource-group ${{ inputs.terraform_st_resource_group }} --query '[0].value' -o tsv)
     - name: Terraform Validate
       run: terraform -chdir=${{ inputs.terraform_workingdir }} validate
       env:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}     
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}  
     - name: Terraform Plan
       run: terraform -chdir=${{ inputs.terraform_workingdir }} plan -out=plan.tfplan -input=false -var "location=${{ inputs.terraform_plan_location }}" -var "prefix=${{ inputs.namespace }}" -var "postfix=${{ inputs.postfix }}" -var "environment=${{ inputs.environment }}" 
         -var "enable_aml_computecluster=${{ inputs.enable_aml_computecluster }}" -var "enable_monitoring=${{ inputs.enable_monitoring }}" -var "client_secret=${{ env.ARM_CLIENT_SECRET }}"
@@ -175,7 +176,7 @@ jobs:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}     
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}  
     - name: Terraform Apply
       if: ${{ inputs.TFAction == 'apply'}}  
       run: terraform -chdir=${{ inputs.terraform_workingdir }} apply -input=false -auto-approve plan.tfplan 
@@ -183,7 +184,7 @@ jobs:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}     
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}  
     - name: Terraform Destroy
       if: ${{ inputs.TFAction == 'destroy' }} 
       run: terraform -chdir=${{ inputs.terraform_workingdir }} destroy -input=false -auto-approve
@@ -191,4 +192,4 @@ jobs:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}     
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}  
