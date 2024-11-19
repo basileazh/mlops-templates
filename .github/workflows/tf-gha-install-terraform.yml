@@ -91,17 +91,15 @@ jobs:
         shell: bash
     steps:
     - name: azure-login
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
         creds: ${{ env.AZURE_CREDENTIALS }}
-        # environment: 'TBD' - default to azurecloud
       env: 
         AZURE_CREDENTIALS: ${{ secrets.azure_creds }}
     - name: create-tfstate-resource-group
-      uses: azure/CLI@v1
+      uses: azure/CLI@v2
       with:
-        azcliversion: 2.30.0
-        #
+        azcliversion: 2.54.0
         inlineScript: |
           az account set -s ${{ env.ARM_SUBSCRIPTION_ID  }}
           az group create --location ${{ inputs.terraform_st_location }} --name ${{ inputs.terraform_st_resource_group }}  
@@ -111,23 +109,24 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.subscriptionId }}
         ARM_TENANT_ID: ${{ secrets.tenantId }}
     - name: create-tfstate-storage-account
-      uses: azure/CLI@v1
+      uses: azure/CLI@v2
       with:
-        azcliversion: 2.30.0
-        #
+        azcliversion: 2.54.0
         inlineScript: |
           az account set -s ${{ env.ARM_SUBSCRIPTION_ID  }}
-          az storage account create -n ${{ inputs.terraform_st_storage_account }} -g ${{ inputs.terraform_st_resource_group }} -l ${{ inputs.terraform_st_location }} --sku Standard_LRS --minimum-tls-version "TLS1_2" 
+          az storage account create -n ${{ inputs.terraform_st_storage_account }} \
+            -g ${{ inputs.terraform_st_resource_group }} \
+            -l ${{ inputs.terraform_st_location }} \
+            --sku Standard_LRS
       env:
         ARM_CLIENT_ID: ${{ secrets.clientId }}
         ARM_CLIENT_SECRET: ${{ secrets.clientSecret }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.subscriptionId }}
         ARM_TENANT_ID: ${{ secrets.tenantId }}    
     - name: create-tfstate-storage-container
-      uses: azure/CLI@v1
+      uses: azure/CLI@v2
       with:
-        azcliversion: 2.30.0
-        #
+        azcliversion: 2.54.0
         inlineScript: |
           az account set -s ${{ env.ARM_SUBSCRIPTION_ID  }}
           az storage container create --account-name ${{ inputs.terraform_st_storage_account }} --name ${{ inputs.terraform_st_container_name }}
@@ -146,9 +145,9 @@ jobs:
         shell: bash
     steps:
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2 
+      uses: hashicorp/setup-terraform@v3
     - name: Terraform Init
       run: echo ${{ env.ARM_SUBSCRIPTION_ID }}; 
         echo "all env:${{ env.ARM_CLIENT_ID }}::${{ env.ARM_SUBSCRIPTION_ID }}";
